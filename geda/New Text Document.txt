@@ -1,0 +1,293 @@
+<?php
+session_start();
+require '../db_connection.php';
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../login.php');
+    exit;
+}
+
+// Ensure seat is selected
+if (!isset($_POST['selected_seat']) || empty($_POST['selected_seat'])) {
+    header('Location: seat_selection.php');
+    exit;
+}
+
+// Fetch selected seat number and passenger details from the session or POST
+$selected_seat = $_POST['selected_seat'];
+$flight_id = $_SESSION['flight_id'];
+$passenger_details = $_SESSION['passenger_details'];
+
+// Check if the seat is already booked
+$stmt = $pdo->prepare("SELECT * FROM bookings WHERE flight_id = :flight_id AND seat_number = :seat_number");
+$stmt->execute(['flight_id' => $flight_id, 'seat_number' => $selected_seat]);
+$existing_booking = $stmt->fetch();
+
+if ($existing_booking) {
+    // Seat is already booked, inform the user
+    echo "<script>alert('This seat is already booked. Please select another seat.'); window.location.href = 'seat_selection.php';</script>";
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get payment details from form submission
+    $payment_method = htmlspecialchars($_POST['payment_method']);
+    $bank_number = htmlspecialchars($_POST['bank_number']);
+    $payment_amount = htmlspecialchars($_POST['payment_amount']);
+
+    // Insert booking information into the database
+    $stmt = $pdo->prepare("INSERT INTO bookings (user_id, flight_id, seat_number, name, gender, age, address, payment_method, payment_amount, payment_status) 
+                           VALUES (:user_id, :flight_id, :seat_number, :name, :gender, :age, :address, :payment_method, :payment_amount, 'pending')");
+    
+    $stmt->execute([
+        'user_id' => $_SESSION['user_id'],
+        'flight_id' => $flight_id,
+        'seat_number' => $selected_seat,
+        'name' => $passenger_details['name'],
+        'gender' => $passenger_details['gender'],
+        'age' => $passenger_details['age'],
+        'address' => $passenger_details['address'],
+        'payment_method' => $payment_method,
+        'payment_amount' => $payment_amount,
+    ]);
+
+    // Redirect to the confirmation page or payment success page
+    header('Location: payment_success.php'); // or any other page after successful payment
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .header {
+            background-color: #004080;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        .header nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #004080;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #003366;
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+        <h1>Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?></h1>
+        <nav>
+            <a href="dashboard.php">Home</a>
+            <a href="view_flights.php">View Available Flights</a>
+            <a href="search_flights.php">Search Flights</a>
+            <a href="booking_history.php">View Booking History</a>
+            <a href="../index.php">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Payment for Flight Booking</h1>
+        <p>Seat: <?php echo htmlspecialchars($selected_seat); ?> | Flight ID: <?php echo htmlspecialchars($flight_id); ?></p>
+        <p>Passenger: <?php echo htmlspecialchars($passenger_details['name']); ?></p>
+        
+        <form method="POST">
+            <label for="payment_method">Select Payment Method</label>
+            <select name="payment_method" id="payment_method" required>
+                <option value="CBE BANK">CBE BANK</option>
+                <option value="AWASH BANK">AWASH BANK</option>
+                <option value="OROMIA BANK">OROMIA BANK</option>
+            </select><br>
+
+            <label for="bank_number">Bank Number</label>
+            <input type="text" name="bank_number" id="bank_number" required><br>
+
+            <label for="payment_amount">Payment Amount</label>
+            <input type="number" name="payment_amount" id="payment_amount" value="1000" readonly><br>
+
+            <button type="submit" class="button">Finish Payment</button>
+        </form>
+    </div>
+</body>
+</html>
+
+@@@@@@@@@@@@@@@@@@@@
+
+
+
+<?php
+session_start();
+require '../db_connection.php';
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../login.php');
+    exit;
+}
+
+// Ensure seat is selected
+if (!isset($_POST['selected_seat']) || empty($_POST['selected_seat'])) {
+    header('Location: seat_selection.php');
+    exit;
+}
+
+// Fetch selected seat number and passenger details from the session or POST
+$selected_seat = $_POST['selected_seat'];
+$flight_id = $_SESSION['flight_id'];
+$passenger_details = $_SESSION['passenger_details'];
+
+// Check if the seat is already booked
+$stmt = $pdo->prepare("SELECT * FROM bookings WHERE flight_id = :flight_id AND seat_number = :seat_number");
+$stmt->execute(['flight_id' => $flight_id, 'seat_number' => $selected_seat]);
+$existing_booking = $stmt->fetch();
+
+if ($existing_booking) {
+    // Seat is already booked, inform the user
+    echo "<script>alert('This seat is already booked. Please select another seat.'); window.location.href = 'seat_selection.php';</script>";
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get payment details from form submission
+    $payment_method = htmlspecialchars($_POST['payment_method']);
+    $bank_number = htmlspecialchars($_POST['bank_number']);
+    $payment_amount = htmlspecialchars($_POST['payment_amount']);
+
+    // Insert booking information into the database
+    $stmt = $pdo->prepare("INSERT INTO bookings (user_id, flight_id, seat_number, name, gender, age, address, payment_method, payment_amount, payment_status) 
+                           VALUES (:user_id, :flight_id, :seat_number, :name, :gender, :age, :address, :payment_method, :payment_amount, 'pending')");
+    
+    $stmt->execute([
+        'user_id' => $_SESSION['user_id'],
+        'flight_id' => $flight_id,
+        'seat_number' => $selected_seat,
+        'name' => $passenger_details['name'],
+        'gender' => $passenger_details['gender'],
+        'age' => $passenger_details['age'],
+        'address' => $passenger_details['address'],
+        'payment_method' => $payment_method,
+        'payment_amount' => $payment_amount,
+    ]);
+
+    // Redirect to the confirmation page or payment success page
+    header('Location: payment_success.php'); // or any other page after successful payment
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .header {
+            background-color: #004080;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        .header nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #004080;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #003366;
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+        <h1>Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?></h1>
+        <nav>
+            <a href="dashboard.php">Home</a>
+            <a href="view_flights.php">View Available Flights</a>
+            <a href="search_flights.php">Search Flights</a>
+            <a href="booking_history.php">View Booking History</a>
+            <a href="../index.php">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Payment for Flight Booking</h1>
+        <p>Seat: <?php echo htmlspecialchars($selected_seat); ?> | Flight ID: <?php echo htmlspecialchars($flight_id); ?></p>
+        <p>Passenger: <?php echo htmlspecialchars($passenger_details['name']); ?></p>
+        
+        <form method="POST">
+            <label for="payment_method">Select Payment Method</label>
+            <select name="payment_method" id="payment_method" required>
+                <option value="CBE BANK">CBE BANK</option>
+                <option value="AWASH BANK">AWASH BANK</option>
+                <option value="OROMIA BANK">OROMIA BANK</option>
+            </select><br>
+
+            <label for="bank_number">Bank Number</label>
+            <input type="text" name="bank_number" id="bank_number" required><br>
+
+            <label for="payment_amount">Payment Amount</label>
+            <input type="number" name="payment_amount" id="payment_amount" value="1000" readonly><br>
+
+            <button type="submit" class="button">Finish Payment</button>
+        </form>
+    </div>
+</body>
+</html>
